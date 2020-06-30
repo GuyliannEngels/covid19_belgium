@@ -6,27 +6,22 @@ library(plotly)
 
 ui <- dashboardPage(
   dashboardHeader(title = "COVID 19 Belgique"),
-  dashboardSidebar(disable = FALSE,
-    valueBoxOutput("duree_box", width = 12),
-    valueBoxOutput("conf_box", width = 12),
-    valueBoxOutput("deconf_phase1a", width = 12),
-    valueBoxOutput("deconf_phase1b", width = 12),
-    valueBoxOutput("deconf_phase2", width = 12)
-    ),
+  dashboardSidebar(disable = TRUE),
   dashboardBody(
     fluidRow(
+      valueBoxOutput("duree_box", width = 6),
+      valueBoxOutput("deathNb", width = 6),
       valueBoxOutput("icu", width = 6),
-      valueBoxOutput("new_in", width = 6),
-      valueBoxOutput("deathNb", width = 6)
+      valueBoxOutput("new_in", width = 6)
     ),
     fluidRow(
       column(width = 6,
-        plotlyOutput("hospi_tot_icu", inline = TRUE),
-        plotlyOutput("hospi_tot_in", inline = TRUE)
+             plotlyOutput("hospi_new_in", inline = TRUE),
+             plotlyOutput("hospi_tot_icu", inline = TRUE)
         ),
       column(width = 6,
-        plotlyOutput("hospi_new_in", inline = TRUE),
-        plotlyOutput("death_new", inline = TRUE)
+             plotlyOutput("death_new", inline = TRUE),
+             plotlyOutput("hospi_tot_in", inline = TRUE)
         )
     )
   )
@@ -83,48 +78,23 @@ server <- function(input, output) {
       deaths = sum(deaths, na.rm = TRUE),
     ) -> death
 
+  # Date importante
 
+  deadline <- tibble::tibble(
+    phase = c(
+      "Confinement", "Déconfinement phase 1",
+      "Déconfinement phase 2", "Déconfinement phase 3"),
+    date = lubridate::as_date(
+      c("2020-03-15", "2020-05-20", "2020-05-18", "2020-06-08"))
+  )
+
+  # Server ----
   output$duree_box <- renderValueBox({
     diff <- Sys.Date() - lubridate::as_date("2020-03-13")
     valueBox(
       paste0(as.numeric(diff), " jours"), "Durées des mesures", icon = icon("clock"),
       color = "aqua"
     )
-  })
-
-  output$conf_box <- renderValueBox({
-    diff <- lubridate::as_date("2020-05-04") - lubridate::as_date("2020-03-15")
-    valueBox(
-      paste0(as.numeric(diff), " jours"), "Confinement", icon = icon("clock"),
-      color = "green"
-    )
-  })
-
-  output$deconf_phase1a <- renderValueBox({
-
-    diff <- Sys.Date() - lubridate::as_date("2020-05-04")
-
-    valueBox(
-      paste0(as.numeric(diff), " jours"), "Déconfinement : phase 1A",
-      icon = icon("clock"), color = "orange")
-  })
-
-  output$deconf_phase1b <- renderValueBox({
-
-    diff <- Sys.Date() - lubridate::as_date("2020-05-11")
-
-    valueBox(
-      paste0(as.numeric(diff), " jours"), "Déconfinement : phase 1B",
-      icon = icon("clock"), color = "purple")
-  })
-
-  output$deconf_phase2 <- renderValueBox({
-
-    diff <- Sys.Date() - lubridate::as_date("2020-05-18")
-
-    valueBox(
-      paste0(as.numeric(diff), " jours"), "Déconfinement : phase 2",
-      icon = icon("clock"), color = "purple")
   })
 
   output$icu <- renderValueBox({
@@ -146,10 +116,8 @@ server <- function(input, output) {
 
   output$deathNb <- renderValueBox({
     tot <- sum(death$deaths)
-    tot_last <- sum(death$deaths[death$date == last(death$date)])
 
-    valueBox(
-      paste0(tot, " (+", tot_last ,")"), "Nombre de décès", icon = icon("list-alt"),
+    valueBox(tot, "Nombre de décès", icon = icon("list-alt"),
       color = "red"
     )
   })
@@ -159,6 +127,7 @@ server <- function(input, output) {
     p <- ggplot(hospi, aes(x = date, y = total_in)) +
       geom_line() +
       geom_point() +
+      geom_vline(xintercept = deadline$date) +
       labs(y = "Nombre de patients à l'hopital", x = "Temps") +
       chart::theme_sciviews()
 
@@ -181,6 +150,7 @@ server <- function(input, output) {
     p <- ggplot(hospi, aes(x = date, y = new_in)) +
       geom_line() +
       geom_point() +
+      geom_vline(xintercept = deadline$date) +
       labs(y = "Nouvelles entrées à l'hopital", x = "Temps") +
       chart::theme_sciviews()
 
