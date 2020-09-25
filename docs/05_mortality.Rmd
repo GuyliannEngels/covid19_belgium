@@ -1,0 +1,29 @@
+---
+title: "Mortalité en fonction de l'age, le sex et la region"
+author: "Guyliann Engels"
+date: "25/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+SciViews::R()
+url <- "https://epistat.sciensano.be/Data/COVID19BE_MORT.csv"
+mortality <- read(url)
+```
+
+Par convention, j'utilise des données au format snake case.
+
+```{r}
+mortality %>.%
+  rename_all(., stringr::str_to_lower) -> mortality
+```
+
+# Question posée dans les média
+
+## Avons nous laissé crever nos personnes agées.
+
+Cette question provocante a souvent été entendue dans les médias. Avec les données sur la mortalité, il semble possible d'avoir une idée de la situation. 
+
+> Il faut savoir que pour répondre à cette question, j'utilise les données fournie par sciensano. Le système de comptage à la belge semble avoir surévalué la situation. Ce facteur ne rentre pas dans cette réflexion.
+
