@@ -64,32 +64,33 @@ body <- dashboardBody(
   tabItems(
     tabItem(tabName = "hospi",
             h2("Situation dans les hopitaux"),
-            h3("Nombre de personnes en soins inensifs"),
-            plotOutput("nb_icu"),
+            box(
+              plotOutput("nb_icu"), title = "Nombre de patients en soins inensifs",
+              status = "danger", width = 12, solidHeader = TRUE, collapsible = TRUE),
             fluidRow(
-              column(width = 6,
-                     h3("Nombre de personnes hospitalisées"),
-                     plotOutput("nb_hospi")
+                     box(plotOutput("nb_hospi"), title = "Nombre de patients hospitalisées",
+                         status = "primary", solidHeader = TRUE, collapsible = TRUE),
+                     box(plotOutput("new_in"), title = "Nouvelles entrées à l'hopital",
+                         status = "primary", solidHeader = TRUE, collapsible = TRUE)
                      ),
-              column(width = 6,
-                     h3("Nouvelles entrées à l'hopital"),
-                     plotOutput("new_in")
-                     )
+            fluidRow(
+              box(plotOutput("nb_resp"), title = "Nombre total de patients sous respirateur",
+                  status = "primary", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE),
+              box(plotOutput("nb_ecmo"), title = "Nombre total de patients sous ECMO",
+                  status = "primary", solidHeader = TRUE, collapsible = TRUE, collapsed = TRUE)
             )
-    ),
+            ),
     tabItem(tabName = "cases",
             h2("Les cas confirmés"),
-            h3("Test positifs"),
-            plotOutput("nb_posi"),
+            box(
+              plotOutput("nb_posi"), title = "Cas (tests) positifs",
+              status = "warning", width = 12, solidHeader = TRUE, collapsible = TRUE),
             hr(),
             fluidRow(
-              column(width = 6,
-                     h3("Test effectuée"),
-                     plotOutput("nb_test")
-            ),
-            column(width = 6,
-                   h3("Test positifs/test effectués"),
-                   plotOutput("ratio"))
+              box(plotOutput("nb_test"), title = "Tests effectués",
+                  status = "primary", solidHeader = TRUE, collapsible = TRUE),
+              box(plotOutput("ratio"), title = "Tests positifs/tests effectués",
+                  status = "primary", solidHeader = TRUE, collapsible = TRUE)
             )
     )
   )
@@ -113,6 +114,18 @@ server <- function(input, output) {
 
   output$new_in <- renderPlot({
     chart(hospi_cases, new_in ~ date) +
+      geom_line() +
+      geom_point()
+  })
+
+  output$nb_resp <- renderPlot({
+    chart(hospi_cases, total_in_resp ~ date) +
+      geom_line() +
+      geom_point()
+  })
+
+  output$nb_ecmo <- renderPlot({
+    chart(hospi_cases, total_in_ecmo ~ date) +
       geom_line() +
       geom_point()
   })
