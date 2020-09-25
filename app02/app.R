@@ -64,7 +64,6 @@ body <- dashboardBody(
   tabItems(
     tabItem(tabName = "hospi",
             h2("Situation dans les hopitaux"),
-            ("Il s'agit de l'information le plus utile pour étudier l'évolution de la situaiton sanitaire en Belgique."),
             h3("Nombre de personnes en soins inensifs"),
             plotOutput("nb_icu"),
             fluidRow(
@@ -80,7 +79,6 @@ body <- dashboardBody(
     ),
     tabItem(tabName = "cases",
             h2("Les cas confirmés"),
-            p("Il est plus judicieux de parler de test positifs que de cas positifs."),
             h3("Test positifs"),
             plotOutput("nb_posi"),
             hr(),
