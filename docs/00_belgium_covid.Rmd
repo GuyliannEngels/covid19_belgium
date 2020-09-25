@@ -1,0 +1,55 @@
+---
+title: "Les données sur le COVID en Belgique"
+author: "Guyliann Engels"
+date: "24/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Ce document a pour objectif de découvrir les données mises à disposition par Epistat. Un codebook est mis à disposition par Epistat afin de comprendre les variables <https://epistat.sciensano.be/COVID19BE_codebook.pdf> . 
+
+**Note : Les données mise à disposition ont évoluée au cours du temps. Le codebook a également des modifications au cours du temps**
+
+## Disponibilité des données
+
+Les données sont disponible via la site <https://epistat.wiv-isp.be/covid/>. On retrouve plusieurs tableaux de données sous le format xlsx, csv ou json. Je décide d'utiliser le format csv. 
+
+```{r}
+datasets <- tibble::tibble(
+  short_name = c("confirmed_cases", "cumul_cases", "muni_cases", 
+                 "hospi_cases", "mortality", "nb_test"),
+  name = c("Confirmed cases by date, age, sex and province", 
+           "Cumulative number of confirmed cases by municipality",
+           "Confirmed cases by date and municipality",
+           "Hospitalisations by date and provinces",
+           "Mortality by date, age, sex, and region",
+           "Total number of tests by date"),
+  url = c("https://epistat.sciensano.be/Data/COVID19BE_CASES_AGESEX.csv",
+          "https://epistat.sciensano.be/Data/COVID19BE_CASES_MUNI_CUM.csv",
+          "https://epistat.sciensano.be/Data/COVID19BE_CASES_MUNI.csv",
+          "https://epistat.sciensano.be/Data/COVID19BE_HOSP.csv",
+          "https://epistat.sciensano.be/Data/COVID19BE_MORT.csv",
+          "https://epistat.sciensano.be/Data/COVID19BE_tests.csv")
+)
+```
+
+
+## Apercu des données 
+
+### `r datasets$name[1]`
+
+```{r}
+confirmed_cases <- read(datasets$url[1])
+skimr::skim(confirmed_cases)
+```
+On retrouve un jeu de données qui comprend `r ncol(confirmed_cases)` colonnes et `r nrow(confirmed_cases)` lignes. Les noms des colonnes sont en majuscules. Par convention, j'utilise le snake_case.
+
+> Avant d'aller plus loin, il est intéressant de convertir ces données afin de donner des noms cohérents, des labels aux variables, ....
+
+Ca tableau va permettre de réaliser des analyses générales qui ne vont pas être plus précis que par province.
+
+

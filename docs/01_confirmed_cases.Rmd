@@ -1,0 +1,91 @@
+---
+title: "Les cas confirmé par date, age, sex et province"
+author: "Guyliann Engels"
+date: "25/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+SciViews::R()
+## Confirmed cases by date, age, sex and province
+url <- "https://epistat.sciensano.be/Data/COVID19BE_CASES_AGESEX.csv"
+confirmed_cases <- read(url)
+```
+
+Ce document s'intéresse uniquement au remaniement des données concerant les cas confirmés par date, province, age et sex. Le nom du fichier porte à confusion. Etant donné que toute la population belge n'a pas été testé. Je pense qu'il serait plus judicieux de parler de tests positifs. 
+
+Il est important de nuancé que toute la population n'est pas testée. Nous avons des personnes positives, des personnes négatives et des personnes positives qui n'ont pas été testées.
+
+Dans un premier temps ce constat a fait que j'ai décidé de ne présenter que de la situation dans les hopitaux. La situation dans les hopitaux est selon moi l'information la plus fiable que nous avions au début de la crise. 
+
+Malheureusement l'évolution du nombre de cas confirmé est présent dans tous les médias. Il n'est donc pas possible de ne pas le présenter.
+
+```{r}
+confirmed_cases %>.%
+  rename_all(., stringr::str_to_lower) -> confirmed_cases
+```
+
+# Les provinces & Bruxelles
+
+Le système à la belge est toujours rempli d'exceptions. Il est très courant de parler des provinces de Belgique et d'y inclure la région Bruxelloise. 
+
+```{r}
+unique(confirmed_cases$province)
+```
+On peut observer que les noms des provinces respecte la langue de la province. Des valeurs sont manquantes
+
+# Les régions 
+
+La Belgique comprend 3 régions dont les noms sont proposé en anglais. Des valeurs sont manquantes.
+
+```{r}
+unique(confirmed_cases$region)
+```
+
+# Les groupes d'age
+
+Ce jeu de données comprend 10 niveaux et des valeurs manquantes. 
+
+```{r}
+sort(unique(confirmed_cases$agegroup))
+```
+
+# Le sex
+
+Ce jeu de données comprend 2 niveaux pour la variable sex. 
+
+```{r}
+unique(confirmed_cases$sex)
+```
+
+# Labels des données
+
+
+```{r}
+confirmed_cases <- labelise(
+  confirmed_cases, 
+  label = list(
+    date = "Date",
+    province = "Province et Bruxelles",
+    region = "Région",
+    agegroup = "Groupe d'age",
+    sex = "Sex",
+    cases = "Nombre de cas"
+  ),
+  units = list(date = "J"))
+```
+
+# Quelques graphiques
+
+```{r}
+confirmed_cases %>.%
+  group_by(., date) %>.%
+  summarise(., tot = sum(cases)) %>.%
+  labelise(., label = list(tot = "Nombre de tests positifs")) %>.%
+  chart(., tot ~ date) +
+  geom_line() +
+  geom_point()
+```
+
+
+

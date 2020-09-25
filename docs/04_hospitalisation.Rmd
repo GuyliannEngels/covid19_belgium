@@ -1,0 +1,88 @@
+---
+title: "Nombre d'hospitalisation par date et par provinces"
+author: "Guyliann Engels"
+date: "25/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+SciViews::R()
+url <- "https://epistat.sciensano.be/Data/COVID19BE_HOSP.csv"
+hospi_cases <- read(url)
+```
+
+Par convention, j'utilise des données au format snake case.
+
+```{r}
+hospi_cases %>.%
+  rename_all(., stringr::str_to_lower) -> hospi_cases
+```
+
+
+```{r}
+hospi_cases %>.%
+  select(., -province, -region) %>.%
+  group_by(., date) %>.%
+  summarise(., 
+            total_in = sum(total_in, na.rm = TRUE),
+            total_in_icu = sum(total_in_icu, na.rm = TRUE),
+            total_in_resp = sum(total_in_resp, na.rm = TRUE),
+            total_in_ecmo = sum(total_in_ecmo, na.rm = TRUE),
+            new_in = sum(new_in, na.rm = TRUE),
+            new_out = sum(new_out, na.rm = TRUE)) -> hospi
+
+hospi <- labelise(
+  hospi,
+  label = list(
+    date = "Date",
+    total_in = "Nombre total de patients",
+    total_in_icu = "Nombre total de patients en unité de soins intensifs",
+    total_in_resp = "Nombre total de patients sous respirateur",
+    total_in_ecmo = "Nombre total de patients sous ECMO",
+    new_in = "Nombre de nouvelles personnes hospitalisées",
+    new_out = "Nombre de personnes quittant l'hopital en vie"))
+```
+
+
+# Quelques graphiques
+
+## Nombre total de patients
+
+```{r}
+chart(hospi, total_in ~ date) +
+  geom_line() +
+  geom_point()
+```
+
+Le nombre de patient est intéressant comme information. Cependant, il faut être prudent car tous les patients n'ont pas les mêmes besoins. 
+
+## Nombre total de patients en unité de soins intensifs
+
+```{r}
+chart(hospi, total_in_icu ~ date) +
+  geom_line() +
+  geom_point()
+```
+
+
+## Nombre total de patients sous respirateur ou ECMO
+
+```{r}
+chart(hospi, total_in_resp ~ date) +
+  geom_line() +
+  geom_point()
+
+chart(hospi, total_in_ecmo ~ date) +
+  geom_line() +
+  geom_point()
+
+```
+
+## Nombre de nouvelles personnes hospitalisées
+
+```{r}
+chart(hospi, new_in ~ date) +
+  geom_line() +
+  geom_point()
+```

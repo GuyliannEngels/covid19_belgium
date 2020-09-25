@@ -1,0 +1,92 @@
+---
+title: "Les tests"
+author: "Guyliann Engels"
+date: "25/09/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+SciViews::R()
+url <- "https://epistat.sciensano.be/Data/COVID19BE_tests.csv"
+nb_test <- read(url)
+```
+Par convention, j'utilise des données au format snake case.
+
+```{r}
+nb_test %>.%
+  rename_all(., stringr::str_to_lower) -> nb_test
+```
+
+Dans une première approche, je ne m'intéresse pas à la province ou à la région où le test à eu lieu.
+
+```{r}
+nb_test <- labelise(
+  nb_test, 
+  label = list(
+    date = "Date",
+    province = "Province et Bruxelles",
+    region = "Région",
+    tests_all = "Nombre de tests effectués"
+  ),
+  units = list(date = "J"))
+```
+
+# Quelques graphiques
+
+```{r}
+nb_test %>.%
+  group_by(., date) %>.%
+  summarise(., tot = sum(tests_all)) %>.%
+  labelise(., label = list(tot = "Nombre de tests effectués")) %>.%
+  chart(., tot ~ date) +
+  geom_line() +
+  geom_point()
+```
+
+Ce graphique montre en effet que la capacité de testing journalier à augmentée. 
+
+
+```{r}
+read("https://epistat.sciensano.be/Data/COVID19BE_CASES_AGESEX.csv")%>.%
+  rename_all(., stringr::str_to_lower) %>.%
+  select(., date, cases) %>.%
+  group_by(., date) %>.%
+  summarise(., tot_posi = sum(cases))-> confirmed_tests
+
+nb_test %>.%
+  group_by(., date) %>.%
+  summarise(., tot = sum(tests_all)) %>.%
+  left_join(., confirmed_tests, by = "date") %>.%
+  mutate(., ratio = tot_posi/tot) -> test_ratio
+
+test_ratio <- labelise(test_ratio,
+           label = list(date = "Date",
+                        tot = "Nombre de tests effectués",
+                        tot_posi = "Nombre de tests positifs",
+                        ratio = "Rapport de tests positifs/effectués"),
+           unit = list(date = "J"))
+
+a <- chart(test_ratio, tot_posi ~ date) +
+  geom_line() +
+  geom_point()
+  
+b <- chart(test_ratio, tot ~ date) +
+  geom_line() +
+  geom_point()
+  
+combine_charts(list(a,b), nrow = 2, labels = NULL)
+```
+
+Lorsque l'on observe le nombre de test positif et le nombre de test effectuée, on remarque que le nombre de tests positifs augmente tout comme le nombre de tests réalisés.
+
+```{r}
+chart(test_ratio, ratio ~ date) +
+  geom_line() +
+  geom_point()
+plotly::ggplotly()
+```
+
+Le graphique ci-dessus propose le ratio entre ces deux valeurs. Les premières semaines les capacités de testing étaient faibles. On ne testait que les personnes malades. On observe que lorsque la capacité de testing a augmentée le rapport entre le nombre de tests positifs sur le nombre de tests effectué a diminué. Depuis la fin juillet, on observe un légère augmentation de ce rapport. Cette augmentation s'explique certainement par le retour des vacanciers et la reprise des activités des personnes.
+
+> Ces trois graphiques ne peuvent être interprété l'un sans l'autre. Il serait donc intéressant de la proposer ensemble sur l'app shiny.
